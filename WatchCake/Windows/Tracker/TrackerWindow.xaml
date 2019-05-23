@@ -1,0 +1,108 @@
+﻿<Window x:Class="WatchCake.TrackerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WatchCake"
+        xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        xmlns:DVC="clr-namespace:System.Windows.Controls.DataVisualization.Charting;assembly=System.Windows.Controls.DataVisualization.Toolkit"
+        xmlns:converters="clr-namespace:WatchCake.Windows.ValueConverters"
+        mc:Ignorable="d"                 
+        Title="{Binding Title}" SizeToContent="Height">
+
+    <Window.Resources>
+        <CollectionViewSource Source="{Binding Tracker.Options}" x:Key="GridItems">
+            <CollectionViewSource.SortDescriptions>
+                <scm:SortDescription PropertyName="LatestSnapshot.Price" Direction="Ascending"/>
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+        <converters:PricesToDynamicsIconConverter x:Key="priceDynamicsConverter"></converters:PricesToDynamicsIconConverter>        
+    </Window.Resources>
+
+    <Grid x:Name="MainWrapper" DataContext="{Binding Tracker}" Margin="5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*" MinHeight="300"/>
+        </Grid.RowDefinitions>        
+        
+        <Grid x:Name="Header" Margin="0,0,0,10" Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            
+            <Label Content="{Binding ID, StringFormat='#{0}', FallbackValue='ID'}" FontSize="24" Grid.Column="0" Height="32" Padding="5,0" />
+            <Label Content="{Binding Title, FallbackValue='Tracker Title'}" FontSize="24" Grid.Column="1" Height="32" Padding="5,0" />
+
+            <StackPanel Orientation="Horizontal" Grid.Column="2" HorizontalAlignment="Right">
+
+                <Button Height="24" Margin="0,0,8,0" Click="ScanNow" Padding="10,0">
+                    Rescan All
+                </Button>
+
+                <Button Height="24" Click="EditTracker" Padding="10,0">
+                    Edit Tracker
+                </Button>
+
+            </StackPanel>
+        </Grid>
+        
+        <ScrollViewer Grid.Row="1" MaxHeight="350">
+            <DataGrid x:Name="Options" HorizontalAlignment="Left" ItemsSource="{Binding Source={StaticResource GridItems}}" IsReadOnly="true" AutoGenerateColumns="False">
+
+            <DataGrid.ItemContainerStyle>
+                <Style TargetType="DataGridRow">
+                    <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick"/>
+                </Style>
+            </DataGrid.ItemContainerStyle>            
+            
+            <DataGrid.Columns>
+
+                <DataGridTextColumn Header="Shp" Binding="{Binding Parent.ParentShop.ID}"/>
+                <DataGridTextColumn Header="Pg" Binding="{Binding Parent.ID}"/>
+                <DataGridTextColumn Header="Opt" Binding="{Binding ID}"/>
+
+
+                <DataGridTextColumn Header="Shop" Binding="{Binding Parent.ParentShop.Name}">
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="ToolTip" Value="{Binding Parent.FullUri}" />
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Page" Binding="{Binding Parent.Title}" MaxWidth="150" >
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="ToolTip" Value="{Binding Parent.Title}" />
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Code" Binding="{Binding Code}"/>
+                <DataGridTextColumn Header="Option Name" Binding="{Binding Name}" MaxWidth="250" />
+
+                <DataGridTextColumn Header="Snaps" Binding="{Binding SnapshotCount}"/>
+
+                <DataGridTextColumn Header="Lowest" Binding="{Binding LowestSnapshot.Price}"/>
+                <DataGridTextColumn Header="Mean" Binding="{Binding PriceMean}"/>
+                <DataGridTextColumn Header="Last" Binding="{Binding LatestSnapshot.Price}" SortDirection="Ascending" />
+
+                <DataGridTextColumn Header="Shift" Binding="{Binding PriceDynamics, StringFormat=P0}"/>
+                <DataGridTextColumn Header="↯" Binding="{Binding PriceDynamics, Converter={StaticResource priceDynamicsConverter}}"/>   
+
+
+                <DataGridCheckBoxColumn Header="IsTracked" Binding="{Binding IsTracked}" ></DataGridCheckBoxColumn>
+                <DataGridTextColumn Header="Last Snap" Binding="{Binding LatestSnapshot.Timestamp}"/>   
+                <DataGridTextColumn Header="Stock Status" Binding="{Binding LatestSnapshot.StockStatus}"/>
+
+            </DataGrid.Columns>
+            </DataGrid>
+        </ScrollViewer >
+
+        <DVC:Chart x:Name="TrackChart" Grid.Row="2" MaxHeight="350" Margin="0,5" Background="LightSteelBlue"/>
+
+    </Grid>
+
+</Window>
