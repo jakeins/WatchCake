@@ -40,7 +40,13 @@ namespace WatchCake.Services
         {
             foreach (Page pageBeingTracked in Storage.ListEffectivelyTrackedPages(tracker))
             {
-                SinglePageScan(pageBeingTracked, forcedTimestamp);
+                var result = SinglePageScan(pageBeingTracked, forcedTimestamp);
+
+                if (!result)//quit on 1st error
+                {
+                    Logger.Log("Aborting single page scan.");
+                    return;
+                }
             }
         }
 
@@ -53,7 +59,13 @@ namespace WatchCake.Services
 
             foreach (Page page in uniquePages)
             {
-                SinglePageScan(page, forcedTimestamp);
+                var result = SinglePageScan(page, forcedTimestamp);
+
+                if (!result)//quit on 1st error
+                {
+                    Logger.Log("Aborting multipage scan.");
+                    return;
+                }
             }
         }
 
@@ -71,7 +83,8 @@ namespace WatchCake.Services
         /// <summary>
         /// Fetches and stores fresh page data.
         /// </summary>
-        public void SinglePageScan(Page page, DateTime? forcedTimestamp = null)
+        /// <returns>Success state.</returns>
+        public bool SinglePageScan(Page page, DateTime? forcedTimestamp = null)
         {
             //Parse data
             PageParseResult pageParse = null;
@@ -82,7 +95,11 @@ namespace WatchCake.Services
             }
             catch (FastWeb2NotFoundException)
             {
-                return;
+                return false;
+            }
+            catch (CurrencierException)
+            {
+                return false;
             }
 
             // Digesting page itself
@@ -121,6 +138,8 @@ namespace WatchCake.Services
                 //Store snapshot.
                 Storage.Snapshots.Add(snapshot);
             }
+
+            return true;
         }
     }
 }

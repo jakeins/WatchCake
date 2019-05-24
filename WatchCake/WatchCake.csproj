@@ -102,6 +102,8 @@
     <Compile Include="Data\BulitInParsers\BulitInParsers.cs" />
     <Compile Include="Helpers\UriExtensions.cs" />
     <Compile Include="Helpers\PriceMaths.cs" />
+    <Compile Include="Services\Currencier\ExpirableRate.cs" />
+    <Compile Include="Services\Currencier\CurrencierException.cs" />
     <Compile Include="Services\FastWeb2\FastWeb2NotFoundException.cs" />
     <Compile Include="Services\FastWeb2\FastWeb2Exception.cs" />
     <Compile Include="Services\FastWeb2\FastWeb2WebClient.cs" />

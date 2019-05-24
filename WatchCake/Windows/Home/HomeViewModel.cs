@@ -5,6 +5,8 @@ using WatchCake.DAL;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
+using WatchCake.Services.Currencier;
+using System.Windows;
 
 namespace WatchCake.ViewModels
 {
@@ -24,11 +26,23 @@ namespace WatchCake.ViewModels
         public ObservableCollection<Tracker> TrackersObservable { get; } = new ObservableCollection<Tracker>();
 
         /// <summary>
-        /// Default constructor.
+        /// Default constructor. VM entry point.
         /// </summary>
         public HomeViewModel()
         {
-            InitializeViewModel();            
+            //Set necessary dependency to the Currency service
+            Currencier.IsFileReadAllowed = (currencyID) =>
+            {
+                MessageBoxResult dialogResult = MessageBox.Show(
+                    $"Try to get all rates from the file?",
+                    $"Actual {currencyID} rate is not available",
+                    MessageBoxButton.YesNo);
+
+                return dialogResult == MessageBoxResult.Yes;
+            };
+
+            InitializeViewModel();  
+            
         }
 
         /// <summary>
