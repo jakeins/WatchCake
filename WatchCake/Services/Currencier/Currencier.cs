@@ -28,10 +28,7 @@ namespace WatchCake.Services.Currencier
         /// <summary>
         /// The map keeping all rates relative to the main currency. Tuple [rate],[expires (null = never)]
         /// </summary>
-        static Dictionary<Currency, ExpirableRate> Rates = new Dictionary<Currency, ExpirableRate>()
-        {
-            { Currency.USD, new ExpirableRate(1) }
-        };
+        static Dictionary<Currency, ExpirableRate> Rates = new Dictionary<Currency, ExpirableRate>();
 
         /// <summary>
         /// Web-pulling service instance.
@@ -57,6 +54,23 @@ namespace WatchCake.Services.Currencier
             return false;
         };
 
+        /// <summary>
+        /// Static constructor.
+        /// </summary>
+        static Currencier()
+        {
+            ReinitializeRates();
+        }
+
+        /// <summary>
+        /// Reset the rate map to a clean state.
+        /// </summary>
+        static void ReinitializeRates()
+        {
+            Rates.Clear();
+            SetRate(MainCurrency, new ExpirableRate(1));
+        }
+
         #region Storage
         static readonly string filePath = "rates.cfg";
         static readonly CultureInfo fileCulture = CultureInfo.GetCultureInfo("en-GB");
@@ -68,20 +82,20 @@ namespace WatchCake.Services.Currencier
         {
             StringBuilder content = new StringBuilder();
 
-            foreach (var entry in Rates)
+            foreach (var entry in Rates.Where(c => c.Key != MainCurrency))
                 content.Append($"{entry.Key} to {MainCurrency}       {entry.Value.Rate.ToString("F4", fileCulture).PadRight(10, ' ')}   ({entry.Value.Expires.ToString(fileCulture)})\n");
 
-            File.WriteAllText(filePath, content.ToString());
+            File.WriteAllText(filePath, content.ToString().Trim());
         }
 
         /// <summary>
         /// Create template file.
         /// </summary>
-        static void WriteAllRatesTemplate()
+        static void WriteRatesTemplate()
         {
             StringBuilder content = new StringBuilder();
 
-            var currencies = Enum.GetValues(typeof(Currency)).Cast<Currency>().Select(c=>c.ToString());
+            var currencies = Enum.GetValues(typeof(Currency)).Cast<Currency>().Where(c=>c != MainCurrency).Select(c=>c.ToString());
 
             foreach (var currency in currencies)
                 content.Append($"{currency} to {MainCurrency}       xxx   ({DefaultExpiration})\n");
@@ -94,11 +108,11 @@ namespace WatchCake.Services.Currencier
         /// </summary>
         static void ReadAllRates()
         {
-            Rates.Clear();
+            ReinitializeRates();
 
             //saving with empty Rates would create empty file template.
             if (!File.Exists(filePath))
-                WriteAllRatesTemplate();
+                WriteRatesTemplate();
 
             foreach (string entry in File.ReadAllText(filePath).Split('\n'))
             {
@@ -117,7 +131,7 @@ namespace WatchCake.Services.Currencier
                 decimal.TryParse(valueBit, NumberStyles.Any, fileCulture, out decimal value);
                 DateTime.TryParse(expiresBit, fileCulture, DateTimeStyles.None, out DateTime expires);
 
-                if (currency.ToString() != bits[0] || value <= 0 || expires <= DateTime.Now)
+                if (currency.ToString() != bits[0] || currency == MainCurrency || value <= 0 || expires <= DateTime.Now)
                     continue;
 
                 SetRate(currency, new ExpirableRate(value, expires));                
