@@ -21,15 +21,16 @@ namespace WatchCake.Services.Currencier
         public static Currency MainCurrency { get; set; } = Currency.USD;
 
         /// <summary>
-        /// The map keeping all intercurrency rates.
+        /// The map keeping all rates relative to the main currency
         /// </summary>
-        static Dictionary<Currency, Dictionary<Currency, double>> currenciesMap;
+        static Dictionary<Currency, decimal> Rates;
 
         /// <summary>
         /// Call for initialization of the service, allowing for lazy loading.
         /// </summary>
         static void Initalize()
         {
+            #region Google currency parser setup
             FastWeb2 fastWeb = new FastWeb2("https://www.google.com/");
 
             var valueExtractor = new BitParser()
@@ -45,46 +46,28 @@ namespace WatchCake.Services.Currencier
                     new Mold(MoldType.OnlyFloatChars),
                 }
             };
+            #endregion Google currency parser setup
 
-            var mainCurrency = MainCurrency;
-            var allCurrencies = Enum.GetValues(typeof(Currency)).Cast<Currency>();
-            var secondaryCurrencies = allCurrencies.Where(kc => kc != mainCurrency);
-
-            //initialize main map
-            currenciesMap = new Dictionary<Currency, Dictionary<Currency, double>>()
+            //initialize rates map
+            Rates = new Dictionary<Currency, decimal>()
             {
-                { mainCurrency, new Dictionary<Currency, double>()
-                    {
-                        {  mainCurrency, 1 }
-                    }
-                }
+                { MainCurrency, 1 }
             };
 
             //fill main currecnies
+            var secondaryCurrencies = Enum.GetValues(typeof(Currency)).Cast<Currency>().Where(kc => kc != MainCurrency);
             foreach (Currency currency in secondaryCurrencies)
             {
-                var rawHtml = fastWeb.Get($"search?hl=en&gl=en&q={currency}+to+{mainCurrency}");
+                var rawHtml = fastWeb.Get($"search?hl=en&gl=en&q={currency}+to+{MainCurrency}");
 
                 HtmlDocument document = new HtmlDocument();
                 document.LoadHtml(rawHtml);
                 HtmlNode docNode = document.DocumentNode;
 
                 string exValue = valueExtractor.ExtractSingle(docNode);
-                double.TryParse(exValue, NumberStyles.Any, CultureInfo.InvariantCulture, out double parsedDouble);
+                decimal.TryParse(exValue, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsed);
 
-                currenciesMap[mainCurrency].Add(currency, parsedDouble);                
-            }
-
-            //fill reverse values
-            foreach (Currency secondaryCurrency in secondaryCurrencies)
-            {
-                currenciesMap.Add(secondaryCurrency, new Dictionary<Currency, double>());
-
-                foreach (Currency currency in allCurrencies)
-                {
-                    var rate = currenciesMap[mainCurrency][currency] / currenciesMap[mainCurrency][secondaryCurrency];
-                    currenciesMap[secondaryCurrency].Add(currency, rate);
-                }
+                Rates.Add(currency, parsed);                
             }
         }
 
@@ -92,12 +75,12 @@ namespace WatchCake.Services.Currencier
         /// Get rate between provided currencies.
         /// Rate = How many [alpha]s in [beta]s.
         /// </summary>
-        public static double GetRateFor(Currency alpha, Currency beta)
+        public static decimal GetRateFor(Currency alpha, Currency beta)
         {
-            if (currenciesMap == null)
+            if (Rates == null)
                 Initalize();
 
-            return currenciesMap[alpha][beta];
+            return Rates[beta] / Rates[alpha];
         }
     }
 }
