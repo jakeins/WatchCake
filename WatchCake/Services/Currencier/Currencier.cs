@@ -1,8 +1,6 @@
 ﻿using HtmlAgilityPack;
-using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using WatchCake.Parsers;
 using WatchCake.Parsers.Enums;
 using WatchCake.Services.Molder;
@@ -12,6 +10,7 @@ namespace WatchCake.Services.Currencier
 {
     /// <summary>
     /// Infrastructure-level service dealing with currency.
+    /// Is lazy-loaded in terms of each currency rate request.
     /// </summary>
     public static class Currencier
     {        
@@ -23,17 +22,32 @@ namespace WatchCake.Services.Currencier
         /// <summary>
         /// The map keeping all rates relative to the main currency
         /// </summary>
-        static Dictionary<Currency, decimal> Rates;
+        static Dictionary<Currency, decimal> Rates = new Dictionary<Currency, decimal>()
+        {
+            { MainCurrency, 1 }
+        };
 
         /// <summary>
-        /// Call for initialization of the service, allowing for lazy loading.
+        /// Web-pulling service instance.
         /// </summary>
-        static void Initalize()
-        {
-            #region Google currency parser setup
-            FastWeb2 fastWeb = new FastWeb2("https://www.google.com/");
+        static FastWeb2 fastWeb;
 
-            var valueExtractor = new BitParser()
+        /// <summary>
+        /// Rate parsing rules container. 
+        /// </summary>
+        static BitParser rateParser;
+
+        /// <summary>
+        /// Prepare currencier for retrieving rates from all possible sources.
+        /// </summary>
+        static void EnsureImportingMeansSetup()
+        {
+            if (fastWeb != null)
+                return;
+
+            fastWeb = new FastWeb2("https://www.google.com/");
+
+            rateParser = new BitParser()
             {
                 SelectMethod = SelectMethod.XPath,
                 DetailType = SelectDetailType.Property,
@@ -46,29 +60,30 @@ namespace WatchCake.Services.Currencier
                     new Mold(MoldType.OnlyFloatChars),
                 }
             };
-            #endregion Google currency parser setup
+        }
 
-            //initialize rates map
-            Rates = new Dictionary<Currency, decimal>()
-            {
-                { MainCurrency, 1 }
-            };
+        /// <summary>
+        /// Make sure the rate for provided currency is known.
+        /// </summary>
+        static void EnsureRate(Currency currency)
+        {
+            if (Rates.ContainsKey(currency))
+                return;
 
-            //fill main currecnies
-            var secondaryCurrencies = Enum.GetValues(typeof(Currency)).Cast<Currency>().Where(kc => kc != MainCurrency);
-            foreach (Currency currency in secondaryCurrencies)
-            {
-                var rawHtml = fastWeb.Get($"search?hl=en&gl=en&q={currency}+to+{MainCurrency}");
+            EnsureImportingMeansSetup();
+            
+            //Extraction from Web
+            var rawHtml = fastWeb.Get($"search?hl=en&gl=en&q={currency}+to+{MainCurrency}");
 
-                HtmlDocument document = new HtmlDocument();
-                document.LoadHtml(rawHtml);
-                HtmlNode docNode = document.DocumentNode;
+            HtmlDocument document = new HtmlDocument();
+            document.LoadHtml(rawHtml);
+            HtmlNode docNode = document.DocumentNode;
 
-                string exValue = valueExtractor.ExtractSingle(docNode);
-                decimal.TryParse(exValue, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsed);
+            string exValue = rateParser.ExtractSingle(docNode);
+            decimal.TryParse(exValue, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsed);
 
-                Rates.Add(currency, parsed);                
-            }
+            //Storing
+            Rates.Add(currency, parsed);
         }
 
         /// <summary>
@@ -77,8 +92,8 @@ namespace WatchCake.Services.Currencier
         /// </summary>
         public static decimal GetRateFor(Currency alpha, Currency beta)
         {
-            if (Rates == null)
-                Initalize();
+            EnsureRate(alpha);
+            EnsureRate(beta);
 
             return Rates[beta] / Rates[alpha];
         }
