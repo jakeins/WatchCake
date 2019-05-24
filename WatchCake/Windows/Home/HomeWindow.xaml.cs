@@ -139,7 +139,7 @@ namespace WatchCake
         /// </summary>
         private void ContextMenuTrackerRescan(object sender, RoutedEventArgs e)
         {
-            HomeViewModel.RescanTracker(HomeViewModel.SelectedTracker);
+            HomeViewModel.RescanSingleTracker(HomeViewModel.SelectedTracker);
         }
 
         /// <summary>

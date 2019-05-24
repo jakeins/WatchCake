@@ -31,7 +31,7 @@ namespace WatchCake.ViewModels
         /// <summary>
         /// Main constructor of the window ViewModel. Receives subject tracker ID, and early trackChart setter to have it populated from the beginning.
         /// </summary>
-        public TrackerViewModel(int trackerID, Chart trackChart)
+        public TrackerViewModel(int trackerID, Chart trackChart = null)
         {
             TrackChart = trackChart;
             InitializeViewModel(trackerID);
@@ -63,11 +63,9 @@ namespace WatchCake.ViewModels
         /// </summary>
         public void ReloadIndicatorsDispatched()
         {
-            Task.Run(() => {
-                Dispatch(() =>
-                {
-                    ReloadIndicatorsPlain();
-                });
+            Dispatch(() =>
+            {
+                ReloadIndicatorsPlain();
             });
         }
 
@@ -86,6 +84,9 @@ namespace WatchCake.ViewModels
         /// </summary>
         void ResetChartData()
         {
+            if (TrackChart == null)//ignore absent trackchart
+                return;
+
             TrackChart.Series.Clear();
 
             foreach (Option option in Tracker.Options)
@@ -93,7 +94,7 @@ namespace WatchCake.ViewModels
                 List<KeyValuePair<DateTime, decimal>> pointCollection = new List<KeyValuePair<DateTime, decimal>>();
 
                 foreach (Snapshot snapshot in option.Snapshots)
-                    pointCollection.Add(new KeyValuePair<DateTime, decimal>(snapshot.Timestamp, snapshot.Price.Amount));
+                    pointCollection.Add(new KeyValuePair<DateTime, decimal>(snapshot.Timestamp, Math.Round( snapshot.Price.Amount, 4)  ));//some charts deal badly with precise values, rounding advisable
 
                 LineSeries serie = new LineSeries
                 {
@@ -104,8 +105,7 @@ namespace WatchCake.ViewModels
                 };
 
                 TrackChart.Series.Add(serie);
-            }
-                      
+            }                      
         }
     }
 }

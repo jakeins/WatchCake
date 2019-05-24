@@ -123,6 +123,10 @@ namespace WatchCake.Services.Currencier
                 // EUR to USD     1.1200       (25/05/2019 00:49:29)
                 var whole = Regex.Replace(entry, @"\s+", " ");
                 var bits = whole.Split(' ');
+
+                if (bits.Length != 6)
+                    continue;
+
                 var currencyBit = bits[0];
                 var valueBit = bits[3].Replace(',', '.');
                 var expiresBit = $"{bits[4].Substring(1)} {bits[5].Substring(0, bits[5].Length - 1)}";

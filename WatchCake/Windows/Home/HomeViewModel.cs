@@ -55,30 +55,42 @@ namespace WatchCake.ViewModels
         }
 
         /// <summary>
-        /// Does next effective scan of all trackers.
-        /// </summary>
-        public void DoFullRescan()
-        {
-            Scanner.MultiTrackerScan(TrackersObservable);            
-
-            foreach (Tracker tracker in TrackersObservable)
-                TrackerRescanned?.Invoke((int)tracker.ID);
-
-            RefreshTrackersIndicatorsDispatched();
-        }
-
-        /// <summary>
         /// Event signalizing about the rescan of all tracekrs from home.
         /// </summary>
         public event Action<int> TrackerRescanned;
 
         /// <summary>
+        /// Does next effective scan of all trackers.
+        /// </summary>
+        public void DoFullRescan()
+        {
+            Task.Run(() =>
+            {
+                Scanner.MultiTrackerScan(TrackersObservable);
+
+                Dispatch(() =>
+                {
+                    foreach (Tracker tracker in TrackersObservable)
+                    TrackerRescanned?.Invoke((int)tracker.ID);
+                });
+                RefreshTrackersIndicatorsDispatched();
+            });
+        }
+
+        /// <summary>
         /// Order rescanning of a single provided tracker.
         /// </summary>
-        public void RescanTracker(Tracker tracker)
+        public void RescanSingleTracker(Tracker tracker)
         {
-            Scanner.SingleTrackerScan(tracker);
-            TrackerRescanned?.Invoke((int)tracker.ID);
+            Task.Run(() =>
+            {
+                Scanner.SingleTrackerScan(tracker);
+
+                Dispatch(() =>
+                {                    
+                    TrackerRescanned?.Invoke((int)tracker.ID);
+                });
+            });            
         }
 
         /// <summary>
