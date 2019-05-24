@@ -5,6 +5,8 @@ using WatchCake.Parsers;
 using WatchCake.Parsers.Enums;
 using WatchCake.Services.Molder;
 using WatchCake.Services.FastWebNS;
+using System;
+using ExpirableRate = System.Tuple<decimal, System.DateTime?>;
 
 namespace WatchCake.Services.Currencier
 {
@@ -20,11 +22,11 @@ namespace WatchCake.Services.Currencier
         public static Currency MainCurrency { get; set; } = Currency.USD;
 
         /// <summary>
-        /// The map keeping all rates relative to the main currency
+        /// The map keeping all rates relative to the main currency. Tuple [rate],[expires (null = never)]
         /// </summary>
-        static Dictionary<Currency, decimal> Rates = new Dictionary<Currency, decimal>()
+        static Dictionary<Currency, ExpirableRate> Rates = new Dictionary<Currency, ExpirableRate>()
         {
-            { MainCurrency, 1 }
+            { MainCurrency, new ExpirableRate(1,null) }
         };
 
         /// <summary>
@@ -65,10 +67,20 @@ namespace WatchCake.Services.Currencier
         /// <summary>
         /// Make sure the rate for provided currency is known.
         /// </summary>
-        static void EnsureRate(Currency currency)
+        static void EnsureValidRate(Currency currency)
         {
             if (Rates.ContainsKey(currency))
-                return;
+            {
+                if (Rates[currency].Item2 is null || Rates[currency].Item2 > DateTime.Now)
+                    return;
+                else
+                {
+                    Logger.Log(currency + $" rate has expired since {Rates[currency].Item2} @ Currencier");
+                    Rates.Remove(currency);
+                }
+            }
+            else
+                Logger.Log(currency + " rate is not defined @ Currencier");
 
             EnsureImportingMeansSetup();
             
@@ -82,8 +94,11 @@ namespace WatchCake.Services.Currencier
             string exValue = rateParser.ExtractSingle(docNode);
             decimal.TryParse(exValue, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsed);
 
+
             //Storing
-            Rates.Add(currency, parsed);
+            var expires = DateTime.Now + TimeSpan.FromHours(6);
+            Rates.Add(currency, new ExpirableRate(parsed, expires));
+            Logger.Log(currency + $" rate set: {parsed} @ Currencier");
         }
 
         /// <summary>
@@ -92,10 +107,10 @@ namespace WatchCake.Services.Currencier
         /// </summary>
         public static decimal GetRateFor(Currency alpha, Currency beta)
         {
-            EnsureRate(alpha);
-            EnsureRate(beta);
+            EnsureValidRate(alpha);
+            EnsureValidRate(beta);
 
-            return Rates[beta] / Rates[alpha];
+            return Rates[beta].Item1 / Rates[alpha].Item1;
         }
     }
 }
