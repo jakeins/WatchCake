@@ -50,7 +50,8 @@ namespace WatchCake.Services.Molder
                 { MoldType.CutStart, CutStart },
                 { MoldType.EasyHash, EasyHash },
                 { MoldType.TitleCase, TitleCase },
-                { MoldType.RegexReplace, RegexReplace }
+                { MoldType.RegexReplace, RegexReplace },
+                { MoldType.Override, Override }
             };
         }
 
@@ -431,6 +432,15 @@ namespace WatchCake.Services.Molder
             string stringy = Regex.Replace(subject.ToString(), attributes[0], attributes[1]);
             subject.Clear();
             subject.Append(stringy);
+        }
+
+        /// <summary>
+        /// Set the content to the specified 0th attribute.
+        /// </summary>
+        public static void Override(StringBuilder subject, IList<string> attributes)
+        {
+            subject.Clear();
+            subject.Append(attributes[0]);
         }
     }
 }

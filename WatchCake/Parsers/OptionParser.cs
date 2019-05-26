@@ -108,14 +108,15 @@ namespace WatchCake.Parsers
             }
             catch (NullReferenceException nrex) { Logger.Log(nrex.Message + " @ Option Snapshot Stock Parsing"); }
 
-            ///Price
-            var extracted = PriceAmount.ExtractSingle(str, node);
-            double.TryParse(extracted, NumberStyles.Any, CultureInfo.InvariantCulture, out double parsedDouble);
+            //Price
+            try
+            {
+                var extracted = PriceAmount.ExtractSingle(str, node);
+                decimal.TryParse(extracted, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsedDouble);
 
-            if (parsedDouble <= 0)
-                throw new NullReferenceException($"Zero or negative price [{parsedDouble}] is not permitted.");
-
-            newOptionParse.Price = new Money((decimal)parsedDouble, PriceCurrency);
+                newOptionParse.Price = new Money(parsedDouble, PriceCurrency);
+            }
+            catch (NullReferenceException nrex) { Logger.Log(nrex.Message + " @ Option Snapshot Price Parsing"); }
             #endregion Snapshot Info Parsing
 
             return newOptionParse;

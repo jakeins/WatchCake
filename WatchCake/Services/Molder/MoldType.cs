@@ -32,6 +32,7 @@
         CutStart,
         EasyHash,
         TitleCase,
-        RegexReplace
+        RegexReplace,
+        Override
     }
 }

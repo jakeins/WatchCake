@@ -118,18 +118,12 @@ namespace WatchCake.Parsers
 
                     foreach (var entry in crudeOptions)
                     {
-                        try
-                        {
-                            if(isRegex)
-                                pageParseResult.OptionParseResults.Add(ActualOption.Parse(entry as string));
-                            else
-                                pageParseResult.OptionParseResults.Add(ActualOption.Parse(entry as HtmlNode));
-                        }
-                        catch (NullReferenceException nrex)
-                        {
-                            //Swallow faulty options
-                            Logger.Log(nrex.Message + " @ PageParsing of " + relativeUri);
-                        }
+                        var optionParseResult = isRegex ? ActualOption.Parse(entry as string) : ActualOption.Parse(entry as HtmlNode);
+
+                        if (optionParseResult.Price.Amount == 0 && PriceMode != PriceMode.Add)
+                            continue;
+
+                        pageParseResult.OptionParseResults.Add(optionParseResult);
                     }
                 }
                 catch(NullReferenceException nrex) when (DefaultOptionMode == DefaultOptionMode.Alongside || DefaultOptionMode == DefaultOptionMode.Alternative)
@@ -150,6 +144,7 @@ namespace WatchCake.Parsers
                 try
                 {
                     defaultOption = DefaultOption.Parse(entireDocumentNode);
+                    defaultOption.PropertyA = defaultOption.Code = DefaultOptionMode.ToString();
                 }
                 catch (NullReferenceException nrex)
                 {
