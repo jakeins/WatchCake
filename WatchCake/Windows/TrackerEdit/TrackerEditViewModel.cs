@@ -96,7 +96,7 @@ namespace WatchCake.ViewModels
         /// </summary>
         public TrackerEditViewModel(int? trackerID)
         {
-            if (trackerID == null)
+            if (trackerID == null)//new tracker
             {
                 NewTrackerMode = true;
 
@@ -106,7 +106,7 @@ namespace WatchCake.ViewModels
                     Pages = new ObservableCollection<Page>()
                 };                
             }
-            else
+            else//edit tracker
             {
                 NewTrackerMode = false;
                 TrackerTitlePinned = true;
@@ -114,6 +114,7 @@ namespace WatchCake.ViewModels
                 //load tracker from storage, populate accordingly
                 Tracker = Storage.Trackers[(int)trackerID];
                 Tracker.Pages = new ObservableCollection<Page>(Storage.ListAssociatedTrackedPages(Tracker));
+                Storage.FillPagesOptionCount(Tracker.Pages);
                 Storage.LoadIsTrackedIndicators(Tracker.Pages, Tracker);                
             }
         }   
@@ -149,6 +150,7 @@ namespace WatchCake.ViewModels
                 PageParseResult pageParse = Scanner.ParsePage(page);
                 page.Title = pageParse.Title;
                 page.IsTracked = true;
+                page.OptionCount = pageParse.OptionParseResults.Count();
             }
             catch (WebException)
             {

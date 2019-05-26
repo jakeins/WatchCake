@@ -97,7 +97,20 @@ namespace WatchCake.DAL
             foreach (Page page in pages)
                 FillPageParentShop(page);
         }
-        
+
+        /// <summary>
+        /// Fills the ParentShop member of a page with an instance of a shop, corresponding to known ParentShopID.
+        /// </summary>
+        void FillPageOptionCount(Page page) => page.OptionCount = Options.Count(o=>o.ParentID == page.ID);
+
+        /// <summary>
+        /// For a set of pages, populates its options count.
+        /// </summary>
+        public void FillPagesOptionCount(IEnumerable<Page> pages)
+        {
+            foreach (Page page in pages)
+                FillPageOptionCount(page);
+        }
         #endregion Page-Related
 
         #region TrackedPages
@@ -205,7 +218,7 @@ namespace WatchCake.DAL
 
 
         /// <summary>
-        /// Lists pages that are conceptually tracked, regardless of their 'DontTrack' parameter.
+        /// Lists pages that are conceptually tracked, regardless of their IsTrack parameter.
         /// </summary>
         public IEnumerable<Page> ListAssociatedTrackedPages(Tracker tracker)
         {

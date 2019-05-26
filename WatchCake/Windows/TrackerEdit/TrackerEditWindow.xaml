@@ -62,15 +62,16 @@
                 </DataGrid.ContextMenu>
 
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="ID" Binding="{Binding ID}" IsReadOnly="False"/>
-                    <DataGridTextColumn Header="Shop" Binding="{Binding  ParentShop.Name}" IsReadOnly="False"/>
-                    <DataGridTextColumn Header="Title" Binding="{Binding Title}" IsReadOnly="False">
+                    <DataGridTextColumn Header="ID" Binding="{Binding ID}" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Shop" Binding="{Binding  ParentShop.Name}" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Title" Binding="{Binding Title}" IsReadOnly="True">
                         <DataGridTextColumn.CellStyle>
                             <Style TargetType="DataGridCell">
                                 <Setter Property="ToolTip" Value="{Binding Title}" />
                             </Style>
                         </DataGridTextColumn.CellStyle>
                     </DataGridTextColumn>
+                    <DataGridTextColumn Header="Opts" Binding="{Binding OptionCount}" IsReadOnly="True"/>
                     <DataGridCheckBoxColumn Header="IsTracked" Binding="{Binding IsTracked}" IsReadOnly="False"></DataGridCheckBoxColumn>
                 </DataGrid.Columns>
             </DataGrid>

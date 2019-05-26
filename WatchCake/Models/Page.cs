@@ -62,5 +62,11 @@ namespace WatchCake.Models
         /// Local property indication tracking status of a page within specific context.
         /// </summary>
         public bool? IsTracked { get; set; }
+
+        /// <summary>
+        /// Local property for mere indication count of included options.
+        /// </summary>
+        [NotMapped]
+        public int? OptionCount { get; set; }
     }
 }
