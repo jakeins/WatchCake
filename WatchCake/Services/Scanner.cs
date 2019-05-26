@@ -74,9 +74,6 @@ namespace WatchCake.Services
         /// </summary>
         public PageParseResult ParsePage(Page page)
         {
-            //if (page.ParentShop == null)
-            //    page.ParentShop = Storage.Shops[(int)page.ParentShopID];
-
            return page.ParentShop.Parser.Parse(page.RelativeUri);
         }
 

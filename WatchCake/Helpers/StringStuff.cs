@@ -24,8 +24,12 @@ namespace WatchCake.Helpers
         /// <summary>
         /// Generates hash of a limited length.
         /// </summary>
-        public static string ShortHashCode(string plainText, int limit = int.MaxValue) => SubstrSafe(Base64Encode(plainText.GetHashCode().ToString()), 0, limit);
-        
+        public static string ShortHashCode(string plainText, int limit = int.MaxValue)
+        {
+            string fullhash = SHAer.GenerateSHA256String(plainText);
+            return SubstrSafe(fullhash, 0, limit);
+        }
+
         public static string Base64Encode(string plainText)
         {
             var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
