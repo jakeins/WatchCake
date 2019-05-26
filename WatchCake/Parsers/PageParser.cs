@@ -175,10 +175,16 @@ namespace WatchCake.Parsers
                 optParseRes.Price = optParseRes.Price.AsMainCurrency();
                 var value = optParseRes.Price.Amount;
 
-                value *= 1 - OrderDeduction;
+                value /= 1 + OrderDeduction;
 
                 if(OrderExtra != null && OrderLimit != null && OrderLimit.AsMainCurrency().Amount > 0)
-                    value *= 1 + OrderExtra.AsMainCurrency().Amount / OrderLimit.AsMainCurrency().Amount;
+                {
+                    decimal limitValue = OrderLimit.AsMainCurrency().Amount;
+                    decimal orderExtraValue = OrderExtra.AsMainCurrency().Amount;
+                    decimal piecesPerOrder = limitValue / value;
+                    decimal extraPerPiece = orderExtraValue / piecesPerOrder;
+                    value += extraPerPiece;
+                }                    
 
                 optParseRes.Price.Amount = value;
             }
